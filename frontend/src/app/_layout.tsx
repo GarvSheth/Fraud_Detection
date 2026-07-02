@@ -4,6 +4,9 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(user-tabs)" />
+      <Stack.Screen name="dashboard_admin" />
+      <Stack.Screen name="dashboard_user" />
       <Stack.Screen name="user/[id]" />
       <Stack.Screen name="threat/[id]" />
       <Stack.Screen name="threat/timeline" />
