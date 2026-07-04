@@ -1,42 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Pressable, Modal } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "../../constants/colors";
 
-const threats = [
-  {
-    title: "Unusual transfer detected",
-    status: "Active",
-    risk: "High",
-    detail: "A transfer of $3,200 from a new device was flagged for review.",
-  },
-  {
-    title: "High-value merchant payment flagged",
-    status: "Monitoring",
-    risk: "Medium",
-    detail: "A payment of $1,480 at a new merchant is being reviewed for possible fraud.",
-  },
-  {
-    title: "Duplicate card transaction attempt",
-    status: "Pending",
-    risk: "High",
-    detail: "Two similar transactions were detected within minutes and require confirmation.",
-  },
-];
+type Threat = {
+  threatId: number;
+  transactionId: string;
+  userId: number;
+  description: string;
+  severity: string;
+  status: string;
+  transaction: {
+    amount: number;
+    timestamp: string;
+    deviceInfo: string;
+    location: string;
+    merchant: string;
+    status: string;
+  };
+};
 
 export default function CurrentThreat() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const { name, userId } = useLocalSearchParams<{ name?: string; userId?: string }>();
+
+  const { name, userId } = useLocalSearchParams<{
+    name?: string;
+    userId?: string;
+  }>();
+
   const userName = name || "Sarah Johnson";
   const firstName = userName.split(" ")[0] || userName;
   const userInitial = userName.charAt(0).toUpperCase();
 
+  const [threatsState, setThreatsState] = useState<Threat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchThreats() {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `http://localhost:7000/api/threats?userId=${userId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch threats");
+      }
+
+      const data = await response.json();
+      setThreatsState(data);
+    } catch (error) {
+      console.error("Error fetching threats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchThreats();
+  }, [userId]);
+
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
         <View style={{ paddingHorizontal: 20, paddingTop: 56, gap: 16 }}>
           <View
             style={{
@@ -47,47 +81,210 @@ export default function CurrentThreat() {
               borderColor: COLORS.border,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: COLORS.primary, fontWeight: "700", textTransform: "uppercase" }}>User Dashboard</Text>
-                <Text style={{ fontSize: 24, fontWeight: "800", color: COLORS.text, marginTop: 4 }}>Hello, {firstName}</Text>
-                <Text style={{ marginTop: 4, color: COLORS.textSecondary }}>Here are your active transaction threat alerts</Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: COLORS.primary,
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  User Dashboard
+                </Text>
+
+                <Text
+                  style={{
+                    fontSize: 24,
+                    fontWeight: "800",
+                    color: COLORS.text,
+                    marginTop: 4,
+                  }}
+                >
+                  Hello, {firstName}
+                </Text>
+
+                <Text
+                  style={{
+                    marginTop: 4,
+                    color: COLORS.textSecondary,
+                  }}
+                >
+                  Here are your active transaction threat alerts
+                </Text>
               </View>
 
               <Pressable
                 onPress={() => setMenuOpen(true)}
-                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: COLORS.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                <Ionicons name="menu" size={20} color={COLORS.white} />
+                <Ionicons
+                  name="menu"
+                  size={20}
+                  color={COLORS.white}
+                />
               </Pressable>
             </View>
           </View>
 
           <View style={{ paddingHorizontal: 4 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: COLORS.text }}>Current Threat</Text>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: COLORS.text,
+              }}
+            >
+              Current Threats
+            </Text>
           </View>
 
-          {threats.map((threat, index) => (
-            <Pressable
-              key={index}
-              onPress={() => router.push({ pathname: "/user-threat/[id]" as any, params: { id: String(index + 1) } })}
-              style={{ backgroundColor: COLORS.white, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: COLORS.border }}
+          {loading ? (
+            <Text
+              style={{
+                textAlign: "center",
+                color: COLORS.textSecondary,
+                marginTop: 20,
+              }}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.text, flex: 1, marginRight: 10 }}>{threat.title}</Text>
-                <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: threat.risk === "High" ? "#FEE2E2" : "#FEF3C7" }}>
-                  <Text style={{ color: threat.risk === "High" ? COLORS.danger : COLORS.warning, fontWeight: "700" }}>{threat.risk}</Text>
+              Loading...
+            </Text>
+          ) : threatsState.length === 0 ? (
+            <Text
+              style={{
+                textAlign: "center",
+                color: COLORS.textSecondary,
+                marginTop: 20,
+              }}
+            >
+              No threats found.
+            </Text>
+          ) : (
+            threatsState.map((threat) => (
+              <Pressable
+                key={threat.threatId}
+                onPress={() =>
+                  router.push({
+                    pathname: "/user-threat/[id]" as any,
+                    params: {
+                      id: String(threat.threatId),
+                    },
+                  })
+                }
+                style={{
+                  backgroundColor: COLORS.white,
+                  borderRadius: 22,
+                  padding: 18,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: "700",
+                      color: COLORS.text,
+                      flex: 1,
+                      marginRight: 10,
+                    }}
+                  >
+                    {threat.description}
+                  </Text>
+
+                  <View
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 999,
+                      backgroundColor:
+                        threat.severity.toLowerCase() === "high" ||
+                        threat.severity.toLowerCase() === "critical"
+                          ? "#FEE2E2"
+                          : "#FEF3C7",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          threat.severity.toLowerCase() === "high" ||
+                          threat.severity.toLowerCase() === "critical"
+                            ? COLORS.danger
+                            : COLORS.warning,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {threat.severity}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={{ marginTop: 8, color: COLORS.textSecondary }}>{threat.detail}</Text>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-                <Text style={{ color: COLORS.textSecondary }}>Status: {threat.status}</Text>
-                <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: COLORS.primary }}>
-                  <Text style={{ color: COLORS.white, fontWeight: "600" }}>Open</Text>
+
+                <Text
+                  style={{
+                    marginTop: 8,
+                    color: COLORS.textSecondary,
+                  }}
+                >
+                  {threat.transaction.merchant} • ₹{threat.transaction.amount}
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: 12,
+                  }}
+                >
+                  <Text style={{ color: COLORS.textSecondary }}>
+                    Status: {threat.status}
+                  </Text>
+
+                  <View
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 999,
+                      backgroundColor:
+                        threat.status.toLowerCase() === "resolved"
+                          ? COLORS.success
+                          : COLORS.primary,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: COLORS.white,
+                        fontWeight: "600",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {threat.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </Pressable>
-          ))}
+              </Pressable>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -97,15 +294,70 @@ export default function CurrentThreat() {
         animationType="fade"
         onRequestClose={() => setMenuOpen(false)}
       >
-        <Pressable style={{ flex: 1, backgroundColor: "rgba(15, 23, 42, 0.35)" }} onPress={() => setMenuOpen(false)}>
-          <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 280, backgroundColor: COLORS.white, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24, borderLeftWidth: 1, borderLeftColor: COLORS.border }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: COLORS.primary }}>{userInitial}</Text>
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(15,23,42,0.35)",
+          }}
+          onPress={() => setMenuOpen(false)}
+        >
+          <View
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 280,
+              backgroundColor: COLORS.white,
+              paddingTop: 56,
+              paddingHorizontal: 20,
+              paddingBottom: 24,
+              borderLeftWidth: 1,
+              borderLeftColor: COLORS.border,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: "#DBEAFE",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: COLORS.primary,
+                  }}
+                >
+                  {userInitial}
+                </Text>
               </View>
+
               <View>
-                <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.text }}>{userName}</Text>
-                <Text style={{ color: COLORS.textSecondary }}>{userId ? `User ID #${userId}` : "Personal Account"}</Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: COLORS.text,
+                  }}
+                >
+                  {userName}
+                </Text>
+
+                <Text style={{ color: COLORS.textSecondary }}>
+                  {userId ? `User ID #${userId}` : "Personal Account"}
+                </Text>
               </View>
             </View>
 
@@ -115,9 +367,43 @@ export default function CurrentThreat() {
                 { label: "Settings", icon: "settings-outline" },
                 { label: "Logout", icon: "log-out-outline" },
               ].map((item) => (
-                <Pressable key={item.label} onPress={() => setMenuOpen(false)} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 10, borderRadius: 14, backgroundColor: item.label === "Logout" ? "#FEF2F2" : "#F8FAFC" }}>
-                  <Ionicons name={item.icon as any} size={18} color={item.label === "Logout" ? COLORS.danger : COLORS.textSecondary} />
-                  <Text style={{ marginLeft: 10, color: item.label === "Logout" ? COLORS.danger : COLORS.text, fontWeight: "600" }}>{item.label}</Text>
+                <Pressable
+                  key={item.label}
+                  onPress={() => setMenuOpen(false)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: 12,
+                    paddingHorizontal: 10,
+                    borderRadius: 14,
+                    backgroundColor:
+                      item.label === "Logout"
+                        ? "#FEF2F2"
+                        : "#F8FAFC",
+                  }}
+                >
+                  <Ionicons
+                    name={item.icon as any}
+                    size={18}
+                    color={
+                      item.label === "Logout"
+                        ? COLORS.danger
+                        : COLORS.textSecondary
+                    }
+                  />
+
+                  <Text
+                    style={{
+                      marginLeft: 10,
+                      color:
+                        item.label === "Logout"
+                          ? COLORS.danger
+                          : COLORS.text,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
