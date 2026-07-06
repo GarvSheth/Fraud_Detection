@@ -8,6 +8,8 @@ builder.Services
     .AddApplicationServices()
     .AddDatabase(builder.Configuration, builder.Environment);
 
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

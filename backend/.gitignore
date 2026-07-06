@@ -1,0 +1,42 @@
+appsettings.json
+# Build folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# NuGet
+*.nupkg
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Publish output
+publish/
+
+# Test results
+TestResults/
+
+# Generated files
+Generated/
