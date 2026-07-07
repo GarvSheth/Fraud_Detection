@@ -1,9 +1,8 @@
-namespace backend.Models;
+namespace FraudDetectionBackend.Models;
 
 public class PredictionRequest
 {
-    public int UserId { get; set; }
-
+    public int AccountId { get; set; }
     public int CreditScore { get; set; }
 
     public int PreviousFraudCount { get; set; }

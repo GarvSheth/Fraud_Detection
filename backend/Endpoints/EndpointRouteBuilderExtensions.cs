@@ -11,6 +11,7 @@ public static class EndpointRouteBuilderExtensions
         app.MapNotificationEndpoints();
         app.MapTransactionEndpoints();
         app.MapAuditEndpoints();
+        app.MapPredictionEndpoints();
 
         return app;
     }
