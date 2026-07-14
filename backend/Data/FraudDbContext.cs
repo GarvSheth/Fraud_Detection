@@ -70,12 +70,21 @@ public class FraudDbContext : DbContext
 
         modelBuilder.Entity<AuditLog>(entity =>
         {
-            entity.ToTable("AuditLogs");
-            entity.HasKey(a => a.LogId);
-            entity.HasOne(a => a.Account)
-                .WithMany(acc => acc.AuditLogs)
-                .HasForeignKey(a => a.AccountId)
+            entity.HasKey(a => a.AuditId);
+
+            entity.HasOne(a => a.Transaction)
+                .WithMany()
+                .HasForeignKey(a => a.TransactionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(a => a.EventType)
+                .IsRequired();
+
+            entity.Property(a => a.Decision)
+                .IsRequired();
+
+            entity.Property(a => a.Timestamp)
+                .IsRequired();
         });
     }
 }

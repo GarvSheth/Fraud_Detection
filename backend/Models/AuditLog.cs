@@ -6,16 +6,14 @@ namespace FraudDetectionBackend.Models;
 public class AuditLog
 {
     [Key]
-    public int LogId { get; set; }
+    public int AuditId { get; set; }
 
-    [ForeignKey(nameof(Account))]
-    public int AccountId { get; set; }
+    public Guid TransactionId { get; set; }
+
+    public string EventType { get; set; } = string.Empty;
+
+    public string Decision { get; set; } = string.Empty;
 
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-    [Required]
-    [MaxLength(1000)]
-    public string Details { get; set; } = string.Empty;
-
-    public Account Account { get; set; } = null!;
+    public Transaction? Transaction { get; set; }
 }

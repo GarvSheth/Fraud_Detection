@@ -78,8 +78,29 @@ public static class DatabaseInitializer
         );
 
         db.AuditLogs.AddRange(
-            new AuditLog { AccountId = account.AccountId, Details = "Account created" },
-            new AuditLog { AccountId = account.AccountId, Details = "Fraud review initiated" }
+            new AuditLog
+            {
+                TransactionId = approvedTransaction.TransactionId,
+                EventType = "TransactionProcessed",
+                Decision = "Approved",
+                Timestamp = DateTime.UtcNow.AddDays(-1)
+            },
+
+            new AuditLog
+            {
+                TransactionId = pendingTransaction.TransactionId,
+                EventType = "FraudReviewInitiated",
+                Decision = "Pending",
+                Timestamp = DateTime.UtcNow.AddHours(-2)
+            },
+
+            new AuditLog
+            {
+                TransactionId = blockedTransaction.TransactionId,
+                EventType = "FraudDetected",
+                Decision = "Blocked",
+                Timestamp = DateTime.UtcNow.AddMinutes(-30)
+            }
         );
 
         await db.SaveChangesAsync();
